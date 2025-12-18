@@ -1,7 +1,18 @@
-torch
-open_clip_torch
-numpy
-pillow
-tqdm
-psutil
-streamlit
+# Core dependencies for embed_images.py
+
+# ML/AI Framework
+torch>=2.0.0
+numpy>=1.21.0
+
+# Computer Vision
+Pillow>=9.0.0
+open-clip-torch>=2.20.0
+
+# Utilities
+tqdm>=4.60.0
+psutil>=5.9.0
+
+# Optional: for development and testing
+pytest>=7.0.0
+black>=22.0.0
+flake8>=4.0.0

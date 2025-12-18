@@ -1,3 +1,98 @@
+# The Visual Cortex
+
+A lightweight image-embedding pipeline using OpenAI CLIP, optimized for CPU with clear metrics, simple outputs, and a tiny footprint. Use it to generate embeddings, run quick validation, and plug into downstream tasks like similarity search or clustering.
+
+> For full instructions, see USAGE_GUIDE.md.
+
+## Quick Start
+
+```bash
+# 1) Move to project root
+cd /home/arcanegus/the-visual-cortex
+
+# 2) (Recommended) Create & activate a virtual env
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# 3) Install dependencies
+pip install -r requirements.txt
+
+# Optional: NVIDIA GPU (CUDA 11.8)
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# 4) Prepare images
+mkdir -p data/images
+# Copy or place .jpg/.jpeg/.png files into data/images
+
+# 5) Run the embedding pipeline
+python src/embed_images.py
+```
+
+## Directory Layout
+
+```
+the-visual-cortex/
+├── src/
+│   ├── embed_images.py          # Main script (CLIP image embeddings)
+│   ├── test_embed_images.py     # Validation suite
+│   ├── embed.py                 # Placeholder for future use
+│   ├── search.py                # Placeholder for search
+│   ├── ingest.py                # Placeholder for ingest
+│   ├── config.py                # Placeholder for config
+│   └── utils.py                 # Placeholder for utilities
+├── data/
+│   ├── images/                  # Place your input images here
+│   └── embeddings/              # Generated embeddings
+├── requirements.txt             # Dependencies
+├── VALIDATION_REPORT.md         # Validation report (generated/maintained by you)
+└── USAGE_GUIDE.md               # Detailed usage guide
+```
+
+## What You Get
+
+Running `src/embed_images.py` produces:
+- `data/embeddings/image_embeddings.npy` — Matrix (N x 512)
+- `data/embeddings/image_filenames.npy` — Filenames aligned with embeddings
+- `data/embeddings/metadata.json` — Run metadata, timing, memory, failures
+
+Example check:
+```python
+import numpy as np
+emb = np.load('data/embeddings/image_embeddings.npy')
+print(emb.shape)  # (N, 512)
+```
+
+## Validation
+
+```bash
+python src/test_embed_images.py
+```
+Expected: 5/5 tests pass with structure, imports, errors, and metadata validated.
+
+## Configuration
+
+Inside `src/embed_images.py` you can tweak:
+- Model: `MODEL_NAME` (e.g., "ViT-B-32" default, "ViT-B-16", "ViT-L-14")
+- Device: `DEVICE` ("cpu", "cuda", "mps")
+
+## Troubleshooting
+
+- No images found: ensure files exist under `data/images/`.
+- Missing torch: `pip install torch` (or the CUDA wheel above).
+- CUDA OOM: switch `DEVICE = "cpu"` or use fewer images/smaller model.
+- Slow on CPU: prefer GPU, fewer images, or a smaller model.
+
+## Next Steps
+
+- Add text-to-image search (multimodal)
+- Provide a REST API for queries
+- Add batch ingest support
+- Implement an embedding cache
+- Build a simple web UI
+
+---
+
+For detailed walkthroughs, logs, sample outputs, and advanced options, read USAGE_GUIDE.md.
 The Visual Cortex
 =================
 

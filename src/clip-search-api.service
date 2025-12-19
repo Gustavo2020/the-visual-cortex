@@ -1,0 +1,43 @@
+[Unit]
+Description=CLIP Image Search API - FastAPI with Gunicorn
+After=network.target
+Wants=clip-search-api.service
+
+[Service]
+# User and group to run service
+User=www-data
+Group=www-data
+
+# Working directory
+WorkingDirectory=/path/to/the-visual-cortex/src
+
+# Environment variables
+Environment="PATH=/path/to/the-visual-cortex/src/venv/bin"
+EnvironmentFile=/path/to/the-visual-cortex/src/.env
+
+# Start command
+ExecStart=/path/to/the-visual-cortex/src/venv/bin/gunicorn \
+    --workers 4 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 127.0.0.1:8000 \
+    --access-logfile /var/log/clip-search/access.log \
+    --error-logfile /var/log/clip-search/error.log \
+    --log-level info \
+    --timeout 120 \
+    api:app
+
+# Restart policy
+Restart=always
+RestartSec=10s
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=clip-search
+
+# Resource limits
+LimitNOFILE=65535
+LimitNPROC=65535
+
+[Install]
+WantedBy=multi-user.target

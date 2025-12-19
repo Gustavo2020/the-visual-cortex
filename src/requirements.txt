@@ -1,0 +1,186 @@
+# ============================================================================
+# The Visual Cortex - Production Dependencies
+# ============================================================================
+# Python 3.8+ required
+# Install with: pip install -r requirements.txt
+#
+# For GPU support (NVIDIA CUDA 11.8):
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# ============================================================================
+# Core ML/Vision Dependencies (Required)
+# ============================================================================
+numpy>=1.21.0               # Numerical computing
+torch>=1.9.0                # Deep learning framework
+                            # For GPU: pip install torch --index-url https://download.pytorch.org/whl/cu118
+open-clip-torch>=2.0.0      # CLIP implementation
+Pillow>=8.0.0               # Image processing
+psutil>=5.8.0               # System monitoring
+tqdm>=4.50.0                # Progress bars
+
+# ============================================================================
+# REST API Framework (Required)
+# ============================================================================
+fastapi>=0.95.0             # Modern async web framework
+uvicorn>=0.21.0             # ASGI application server
+pydantic>=1.9.0             # Data validation using Python type annotations
+python-multipart>=0.0.5     # Multipart form data handling
+
+# ============================================================================
+# Production Server (Required for production)
+# ============================================================================
+gunicorn>=20.1.0            # Production-grade Python WSGI HTTP Server
+                            # Usage: gunicorn --workers 4 --worker-class uvicorn.workers.UvicornWorker api:app
+
+# ============================================================================
+# Rate Limiting & Security (Optional but recommended)
+# ============================================================================
+slowapi>=0.1.5              # Rate limiting for FastAPI
+                            # Ready to implement if needed
+
+# ============================================================================
+# Monitoring & Logging (Optional)
+# ============================================================================
+python-json-logger>=2.0.0   # JSON logging formatter
+                            # For structured logging in production
+
+# ============================================================================
+# Testing (Development - not required for production runtime)
+# ============================================================================
+pytest>=7.0.0               # Testing framework
+pytest-asyncio>=0.20.0      # Async test support
+pytest-cov>=3.0.0           # Code coverage measurement
+
+# ============================================================================
+# Development & Code Quality (Development only)
+# ============================================================================
+black>=22.0.0               # Code formatter
+flake8>=4.0.0               # Style guide enforcement
+mypy>=0.950                 # Static type checker
+isort>=5.10.0               # Import statement organizer
+autopep8>=1.6.0             # Automatic code formatter
+
+# ============================================================================
+# Documentation (Optional)
+# ============================================================================
+# sphinx>=4.0.0             # Documentation generator
+# sphinx-rtd-theme>=1.0.0   # ReadTheDocs Sphinx theme
+
+# ============================================================================
+# System Requirements for Production Deployment
+# ============================================================================
+# 
+# Minimum:
+#   - Python: 3.8+
+#   - CPU: 2+ cores
+#   - Memory: 2GB RAM
+#   - Disk: 2GB for dependencies + model cache
+#
+# Recommended:
+#   - Python: 3.10+
+#   - CPU: 4+ cores
+#   - Memory: 4GB RAM
+#   - Disk: 5GB for dependencies + model cache + embeddings
+#   - GPU: NVIDIA with CUDA 11.8+ (optional, 10-20x speedup)
+#
+# Storage for CLIP Models (downloads on first use):
+#   - ViT-B-32: ~350MB
+#   - ViT-B-16: ~700MB
+#   - ViT-L-14: ~1.2GB
+
+# ============================================================================
+# Installation Instructions
+# ============================================================================
+#
+# 1. Basic setup (CPU):
+#    python3 -m venv venv
+#    source venv/bin/activate
+#    pip install -r requirements.txt
+#
+# 2. GPU setup (NVIDIA CUDA):
+#    python3 -m venv venv
+#    source venv/bin/activate
+#    pip install -r requirements.txt
+#    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#
+# 3. Production deployment:
+#    pip install --no-cache-dir -r requirements.txt
+#    export CLIP_DEVICE=cuda  # Use GPU if available
+#    gunicorn --workers 4 --worker-class uvicorn.workers.UvicornWorker api:app
+#
+# 4. Docker deployment:
+#    docker build -t clip-search .
+#    docker run -p 8000:8000 clip-search
+#
+# 5. Docker Compose (with Nginx HTTPS):
+#    docker-compose -f docker-compose.production.yml up -d
+
+# ============================================================================
+# Architecture Overview
+# ============================================================================
+#
+# Production Stack:
+#   Client
+#      ↓ HTTPS (Port 443)
+#   Nginx Reverse Proxy
+#      ↓ HTTP (Port 8000)
+#   Gunicorn (4+ workers)
+#      ↓
+#   Uvicorn Workers
+#      ↓
+#   FastAPI Application
+#      ↓
+#   CLIP Search Engine
+#
+# Key Components:
+#   - FastAPI: REST API framework with automatic documentation
+#   - Uvicorn: ASGI server for async Python web applications
+#   - Gunicorn: WSGI server for production deployment
+#   - Pydantic: Request/response validation
+#   - CLIP: Multimodal embedding model
+#   - Nginx: Reverse proxy with SSL/TLS, rate limiting, compression
+#
+# For complete architecture details, see:
+#   src/HTTPS_FASTAPI_RECOMMENDATIONS.md
+#   src/HTTPS_DEPLOYMENT_GUIDE.md
+
+# ============================================================================
+# Performance Tuning
+# ============================================================================
+#
+# Workers Configuration:
+#   - For CPU (single core): 1 worker
+#   - For CPU (4 cores): 4 workers
+#   - For CPU (8 cores): 8 workers
+#   - Rule: 2-4 workers per CPU core
+#
+# Model Selection (CLIP_MODEL):
+#   - ViT-B-32: Fastest, smaller (default)
+#   - ViT-B-16: Balanced
+#   - ViT-L-14: Slowest, more accurate
+#
+# Device Selection (CLIP_DEVICE):
+#   - cpu: Works everywhere, slower
+#   - cuda: NVIDIA GPU, 10-20x faster
+#
+# Set in .env file or export as environment variables
+
+# ============================================================================
+# Deployment Guides
+# ============================================================================
+#
+# Quick Start:
+#   1. Read README.md (project overview)
+#   2. See HTTPS_ESPANOL.md (Spanish quick guide)
+#
+# Detailed Guides:
+#   - DEPLOYMENT.md (general deployment)
+#   - HTTPS_DEPLOYMENT_GUIDE.md (step-by-step HTTPS)
+#   - HTTPS_FASTAPI_RECOMMENDATIONS.md (architecture)
+#   - CERTIFICATE_SETUP.md (SSL certificate management)
+#
+# All guides in: src/ directory
+
+
+# Optional: Monitoring
+python-json-logger>=2.0.0

@@ -7,7 +7,7 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Set
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -38,10 +38,12 @@ def build_session(user_agent: str, timeout: int, retries: int = 5, backoff: floa
 
 
 def _with_default_timeout(request_func, timeout_default: int):
-    def wrapper(method, url, **kwargs):
+    def wrapper(*args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = timeout_default
-        return request_func(method, url, **kwargs)
+        # request_func is already bound to the session, so we preserve the original
+        # arguments (including self) and only inject the timeout when missing.
+        return request_func(*args, **kwargs)
 
     return wrapper
 
@@ -63,6 +65,19 @@ def ext_from_content_type(ct: Optional[str]) -> Optional[str]:
 
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def load_existing_hashes(path: Path) -> Set[str]:
+    exts = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"}
+    hashes: Set[str] = set()
+    for p in path.iterdir():
+        if not p.is_file() or p.suffix.lower() not in exts:
+            continue
+        try:
+            hashes.add(sha256_bytes(p.read_bytes()))
+        except Exception:
+            continue
+    return hashes
 
 
 def is_reasonable_image(response: requests.Response, min_bytes: int) -> bool:
@@ -91,6 +106,7 @@ def download_one(
     dest_dir: Path,
     min_bytes: int,
     sleep_ok: float,
+    existing_hashes: Set[str],
     filename_prefix: str = "IMG_",
 ) -> Optional[Path]:
     try:
@@ -103,14 +119,23 @@ def download_one(
 
     ct = resp.headers.get("Content-Type")
     ext = ext_from_content_type(ct) or ".jpg"
-    name = f"{filename_prefix}{uuid.uuid4().hex[:8]}{ext}"
-    path = dest_dir / name
+
+    # Ensure we never overwrite existing files; regenerate name if collision.
+    for _ in range(5):
+        candidate = dest_dir / f"{filename_prefix}{uuid.uuid4().hex[:8]}{ext}"
+        if not candidate.exists():
+            path = candidate
+            break
+    else:
+        path = dest_dir / f"{filename_prefix}{uuid.uuid4().hex}{ext}"
 
     try:
         data = resp.content
-        # Optional: deduplicate within the same run by hash of content name-based; lightweight approach
-        # We don't persist an index, keeping it minimal as requested.
+        file_hash = sha256_bytes(data)
+        if file_hash in existing_hashes:
+            return None
         path.write_bytes(data)
+        existing_hashes.add(file_hash)
         if sleep_ok > 0:
             time.sleep(sleep_ok)
         return path
@@ -120,8 +145,8 @@ def download_one(
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Download random images from Unsplash Source with retries and validation.")
-    parser.add_argument("--num-images", type=int, default=100, help="Total images desired in the output directory.")
-    parser.add_argument("--output-dir", type=Path, default=None, help="Directory to store images. Default: data/images next to this script.")
+    parser.add_argument("--num-images", type=int, default=100, help="Number of new images to download (not total).")
+    parser.add_argument("--output-dir", type=Path, default=None, help="Directory to store images. Default: data/images in repository root.")
     parser.add_argument("--width", type=int, default=800, help="Image width.")
     parser.add_argument("--height", type=int, default=600, help="Image height.")
     parser.add_argument("--min-bytes", type=int, default=10_000, help="Minimum response size to accept as image.")
@@ -143,8 +168,11 @@ def main(argv=None) -> int:
     args = parse_args(argv)
 
     script_dir = Path(__file__).resolve().parent
-    output_dir = args.output_dir or (script_dir / "data" / "images")
+    repo_root = script_dir.parent  # Go up to repository root
+    output_dir = args.output_dir or (repo_root / "data" / "images")
     ensure_dir(output_dir)
+
+    existing_hashes = load_existing_hashes(output_dir)
 
     if args.provider == "unsplash":
         url = f"https://source.unsplash.com/{args.width}x{args.height}"
@@ -161,11 +189,10 @@ def main(argv=None) -> int:
         return 2
 
     existing = count_existing_images(output_dir)
-    target_total = max(args.num_images, 0)
-    remaining = max(target_total - existing, 0)
+    remaining = max(args.num_images, 0)
 
     if remaining == 0:
-        print(f"Already have {existing} images in {output_dir}. Nothing to do.")
+        print(f"Already have {existing} images in {output_dir}. Nothing to download.")
         return 0
 
     max_attempts = args.max_attempts if args.max_attempts is not None else remaining * 3
@@ -193,7 +220,7 @@ def main(argv=None) -> int:
             with tqdm(total=remaining, desc="Downloading images") as pbar:
                 while downloaded < remaining and attempts < max_attempts and not interrupted and not time_exceeded():
                     attempts += 1
-                    path = download_one(session, url, output_dir, args.min_bytes, args.sleep_ok)
+                    path = download_one(session, url, output_dir, args.min_bytes, args.sleep_ok, existing_hashes)
                     if path is not None:
                         downloaded += 1
                         pbar.update(1)
@@ -209,7 +236,7 @@ def main(argv=None) -> int:
                         # Keep queue modest: no more than workers pending
                         while len(futures) < args.workers and attempts < max_attempts and not time_exceeded():
                             attempts += 1
-                            futures.add(ex.submit(download_one, session, url, output_dir, args.min_bytes, args.sleep_ok))
+                            futures.add(ex.submit(download_one, session, url, output_dir, args.min_bytes, args.sleep_ok, existing_hashes))
 
                         if not futures:
                             break

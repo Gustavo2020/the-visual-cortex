@@ -1,0 +1,174 @@
+version: '3.8'
+
+services:
+  # ========================================================================
+  # FastAPI Application (Backend)
+  # ========================================================================
+  clip-search-api:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    
+    container_name: clip-search-api
+    
+    # Don't expose port directly - only through nginx
+    expose:
+      - "8000"
+    
+    environment:
+      # CLIP Configuration
+      CLIP_MODEL: "ViT-B-32"
+      CLIP_PRETRAINED: "openai"
+      CLIP_DEVICE: "cpu"  # Change to "cuda" if GPU available
+      
+      # Embeddings
+      EMBEDDINGS_DIR: "/app/data/embeddings"
+      
+      # Search
+      SEARCH_TOP_K: "5"
+      
+      # Logging
+      LOG_LEVEL: "info"
+      
+      # API Settings
+      API_WORKERS: "4"
+    
+    volumes:
+      # Mount embeddings (read-only)
+      - ./data/embeddings:/app/data/embeddings:ro
+      
+      # Mount logs
+      - ./logs/api:/app/logs
+    
+    depends_on:
+      - nginx
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    restart: unless-stopped
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+        reservations:
+          cpus: '2.0'
+          memory: 2G
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    
+    networks:
+      - clip-network
+
+
+  # ========================================================================
+  # Nginx Reverse Proxy (Frontend)
+  # ========================================================================
+  nginx:
+    image: nginx:latest
+    
+    container_name: clip-search-nginx
+    
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    volumes:
+      # Nginx configuration
+      - ./src/nginx.conf:/etc/nginx/nginx.conf:ro
+      
+      # SSL certificates
+      - ./certs:/etc/nginx/certs:ro
+      
+      # Logs
+      - ./logs/nginx:/var/log/nginx
+    
+    depends_on:
+      clip-search-api:
+        condition: service_healthy
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    restart: unless-stopped
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+    
+    networks:
+      - clip-network
+
+
+  # ========================================================================
+  # Optional: Monitoring with Prometheus + Grafana
+  # ========================================================================
+  
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: clip-search-prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - prometheus_data:/prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #   restart: unless-stopped
+  #   networks:
+  #     - clip-network
+  
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: clip-search-grafana
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     GF_SECURITY_ADMIN_PASSWORD: "admin"
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #   depends_on:
+  #     - prometheus
+  #   restart: unless-stopped
+  #   networks:
+  #     - clip-network
+
+
+networks:
+  clip-network:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

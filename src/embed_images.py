@@ -1,5 +1,5 @@
 """
-CLIP image embedding pipeline (CPU-only).
+CLIP/SigLIP image embedding pipeline (CPU-only by default).
 
 - Loads images from data/images
 - Generates CLIP embeddings
@@ -9,9 +9,11 @@ CLIP image embedding pipeline (CPU-only).
 
 import json
 import logging
+import os
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Callable, Any
 
 import numpy as np
 import psutil
@@ -29,14 +31,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Configuration
+# Configuration (model/pretrained can be any CLIP or SigLIP variant supported by open_clip)
 # ====================================
 BASE_DIR = Path(__file__).parent.parent
 IMAGE_DIR = BASE_DIR / "data" / "images"
 OUTPUT_DIR = BASE_DIR / "data" / "embeddings"
-MODEL_NAME = "ViT-B-32"
-PRETRAINED = "openai"
-DEVICE = "cpu"
+MODEL_NAME = os.getenv("CLIP_MODEL", "ViT-B-32")  # ViT-B-32, ViT-B-16, ViT-L-14
+PRETRAINED = os.getenv("CLIP_PRETRAINED", "openai")
+DEVICE = os.getenv("CLIP_DEVICE", "cpu")
 
 # Validate and create directories
 IMAGE_DIR.mkdir(parents=True, exist_ok=True)
@@ -56,6 +58,8 @@ try:
         device=DEVICE
     )
     model.eval()
+    # preprocess is a torchvision Transform (callable)
+    preprocess: Any = preprocess  # type: ignore
     logger.info(f"Model loaded successfully: {MODEL_NAME} ({PRETRAINED})")
 except Exception as e:
     logger.error(f"Failed to load model: {e}")
@@ -91,7 +95,7 @@ with torch.no_grad():
             image_tensor = preprocess(image).unsqueeze(0).to(DEVICE)
 
             # Generate embedding
-            image_features = model.encode_image(image_tensor)
+            image_features = model.encode_image(image_tensor)  # type: ignore
             # L2 normalization
             image_features = image_features / image_features.norm(dim=-1, keepdim=True)
 

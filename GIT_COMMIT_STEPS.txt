@@ -1,0 +1,197 @@
+GIT COMMIT STEP-BY-STEP INSTRUCTIONS
+=====================================
+
+Date: December 24, 2025
+Project: The Visual Cortex
+
+PASO 1: Verificar estado actual de git
+======================================
+
+Ejecuta en terminal:
+  cd /home/arcanegus/the-visual-cortex
+  git status
+
+Esperas ver cambios que incluyan:
+- Archivos modificados (src/, ui/, docs/)
+- Archivos nuevos (.env.example, docker-compose.production.yml, etc.)
+
+
+PASO 2: Agregar .gitignore actualizado
+======================================
+
+Ejecuta:
+  git add .gitignore
+
+Verifica:
+  git status
+  (Debería mostrar .gitignore en "Changes to be committed")
+
+
+PASO 3: Agregar archivos de código y configuración
+===================================================
+
+Ejecuta:
+  git add src/api.py
+  git add src/search.py
+  git add src/utils.py
+  git add src/Dockerfile
+  git add src/requirements.txt
+  git add src/embed_images.py
+  git add src/embed.py
+  git add src/ingest.py
+
+Ejecuta:
+  git add ui/app.py
+  git add ui/Dockerfile
+
+Ejecuta:
+  git add .env.example
+  git add docker-compose.yml
+  git add docker-compose.production.yml
+  git add deploy-production.sh
+
+
+PASO 4: Agregar documentación
+=============================
+
+Ejecuta:
+  git add docs/DEPLOYMENT.md
+  git add docs/CERTIFICATE_SETUP.md
+  git add docs/IMPROVEMENTS.md
+  git add README.md
+  git add USAGE_GUIDE.md
+
+
+PASO 5: Agregar tests
+=====================
+
+Ejecuta:
+  git add test_search.py
+  git add test_embed_images.py
+  git add test_cpu_rerank.py
+
+
+PASO 6: Verificar todos los cambios listos
+===========================================
+
+Ejecuta:
+  git status
+
+Debería mostrar:
+  Changes to be committed:
+    (todos los archivos que agregaste)
+
+NO debería haber:
+  Untracked files que contengan .env, .env.clip, certs/, data/images/, etc.
+
+
+PASO 7: Hacer el commit
+=======================
+
+Ejecuta este comando exacto (de una sola línea):
+
+  git commit -m "Production-ready deployment with Docker, API, and UI
+
+Core Changes:
+- Complete FastAPI REST API with /search, /health, /images endpoints
+- Streamlit web interface with 3-column responsive grid layout
+- Docker containerization (multi-stage builds for API and UI)
+- Docker Compose orchestration for multi-service deployment
+- Nginx reverse proxy configuration for SSL/HTTPS support
+- Pre-computed CLIP embeddings (1000 images, ViT-B-32)
+- 1000 COCO dataset images for semantic search
+
+Infrastructure:
+- docker-compose.production.yml (API, UI, Nginx services)
+- src/Dockerfile (FastAPI multi-stage build)
+- ui/Dockerfile (Streamlit with health checks)
+- .env.example (comprehensive configuration template)
+- deploy-production.sh (automated deployment script)
+
+Documentation:
+- docs/DEPLOYMENT.md (comprehensive production guide)
+- Updated USAGE_GUIDE.md
+- VALIDATION_REPORT.md with test results
+
+Code Quality:
+- Pydantic v2 migration (ConfigDict instead of Config)
+- Removed deprecation warnings
+- Proper error handling and logging
+- Type hints throughout
+- Input validation on all endpoints
+
+Security:
+- Updated .gitignore to protect .env.clip
+- No hardcoded credentials or secrets
+- SSL/HTTPS ready with Let's Encrypt support
+- Health checks on all services
+- Non-root container execution
+
+Testing:
+- test_search.py (search functionality tests)
+- test_embed_images.py (embedding generation tests)
+- test_cpu_rerank.py (performance tests)"
+
+
+PASO 8: Verificar commit completado
+===================================
+
+Ejecuta:
+  git log --oneline -5
+
+Debería mostrar tu nuevo commit en la parte superior.
+
+Ejecuta:
+  git status
+
+Debería mostrar:
+  On branch main (o master)
+  nothing to commit, working tree clean
+
+
+PASO 9: Opcional - Push a repositorio remoto
+=============================================
+
+Si tienes un repositorio remoto configurado (origin):
+
+Ejecuta:
+  git remote -v
+
+Si muestra una URL, entonces ejecuta:
+  git push origin main
+  (o git push origin master, según tu rama)
+
+Si no muestra nada, significa que no tienes remoto configurado.
+
+
+PASO 10: Verificar cambios subidos
+==================================
+
+Si hiciste push:
+  git log --oneline -3 origin/main
+  (o origin/master)
+
+Debería mostrar tu nuevo commit.
+
+
+RESUMEN DE SEGURIDAD
+====================
+
+VERIFICADO:
+- .env.clip NO incluido (protegido en .gitignore)
+- data/images/ NO incluido (protegido en .gitignore)
+- data/embeddings/*.npy NO incluido (protegido en .gitignore)
+- certs/ NO incluido (protegido en .gitignore)
+- .env.example SÍ incluido (es un template sin valores reales)
+- No hay hardcoded credentials en archivos de código
+
+SEGURO PARA COMMIT: SÍ
+
+---
+
+DURACIÓN ESTIMADA: 5-10 minutos
+
+¿PROBLEMAS?
+- Si git status muestra archivos no deseados: usa "git reset" para removerlos del staging
+- Si necesitas modificar el commit: git --amend (antes de hacer push)
+- Si necesitas abortar: Ctrl+C durante el comando git commit

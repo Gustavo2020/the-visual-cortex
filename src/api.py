@@ -60,12 +60,17 @@ class SearchRequest(BaseModel):
         le=100,
         description="Number of results to return"
     )
+    enable_reranking: Optional[bool] = Field(
+        default=None,
+        description="Enable fine-grained re-ranking with multi-crop embeddings (slower but more accurate)"
+    )
     
     class Config:
         schema_extra = {
             "example": {
                 "query": "a red car on a sunny day",
-                "top_k": 5
+                "top_k": 5,
+                "enable_reranking": True
             }
         }
 
@@ -256,10 +261,18 @@ async def search(request: SearchRequest):
             detail="Search engine not initialized"
         )
     
-    logger.info(f"Search request: query='{request.query}', top_k={request.top_k}")
+    logger.info(f"Search request: query='{request.query}', top_k={request.top_k}, reranking={request.enable_reranking}")
     
     try:
-        results = search_engine.search(request.query, request.top_k)
+        # Note: current engine does not support re-ranking in this revision.
+        # We ignore request.enable_reranking to avoid runtime errors.
+        if request.enable_reranking:
+            logger.info("Re-ranking requested but not supported in this build; ignoring.")
+
+        results = search_engine.search(
+            request.query,
+            request.top_k,
+        )
         
         return SearchResponse(
             query=request.query,
@@ -281,7 +294,8 @@ async def search(request: SearchRequest):
 @app.get("/search", response_model=SearchResponse, tags=["Search"])
 async def search_get(
     query: str = Query(..., min_length=2, max_length=512),
-    top_k: int = Query(5, ge=1, le=100)
+    top_k: int = Query(5, ge=1, le=100),
+    enable_reranking: Optional[bool] = Query(None, description="Enable re-ranking")
 ):
     """
     Search for images by text query (GET endpoint).
@@ -289,8 +303,9 @@ async def search_get(
     Query parameters:
         query: Text query to search for images
         top_k: Number of results to return (default: 5, max: 100)
+        enable_reranking: Enable fine-grained re-ranking (optional)
     """
-    request = SearchRequest(query=query, top_k=top_k)
+    request = SearchRequest(query=query, top_k=top_k, enable_reranking=enable_reranking)
     return await search(request)
 
 

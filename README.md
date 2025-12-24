@@ -133,10 +133,6 @@ the-visual-cortex/
 |   |   +-- api.py                      # FastAPI REST API (321 lines)
 |   |   +-- search.py                   # CLIP search engine (362 lines)
 |   |   +-- embed_images.py             # Image embedding pipeline
-|   |   +-- embed.py                    # Embedding utilities
-|   |   +-- ingest.py                   # Data ingestion
-|   |   +-- utils.py                    # Helper functions
-|   |   +-- config.py                   # Configuration
 |   |
 |   +-- TESTING
 |   |   +-- test_search.py              # Search module tests (400+ lines)

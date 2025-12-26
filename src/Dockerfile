@@ -23,16 +23,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Builder stage
 FROM base as builder
 
-# Copy requirements
-COPY src/requirements.txt .
+# Copy production requirements only
+COPY src/requirements.prod.txt requirements.txt
 
 # Create virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install Python dependencies
+# Install Python dependencies (no cache)
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt
 
 
 # Runtime stage

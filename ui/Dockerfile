@@ -16,11 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install dependencies
-COPY src/requirements.txt requirements.txt
+# Install minimal UI dependencies only (no ML stack)
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install -r requirements.txt && \
-    pip install streamlit
+    pip install --no-cache-dir streamlit requests Pillow
 
 # Copy application code
 COPY ui/app.py ./app.py
@@ -42,5 +40,8 @@ RUN mkdir -p ~/.streamlit && \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8501/_stcore/health || exit 1
 
-# Run Streamlit
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Allow serving under a base path via env STREAMLIT_BASE_URL_PATH
+ENV STREAMLIT_BASE_URL_PATH=""
+
+# Run Streamlit (conditionally add baseUrlPath if provided with leading slash)
+CMD ["sh", "-c", "streamlit run app.py --server.port=${STREAMLIT_SERVER_PORT:-8501} --server.address=0.0.0.0 ${STREAMLIT_BASE_URL_PATH:+--server.baseUrlPath=/${STREAMLIT_BASE_URL_PATH}}"]

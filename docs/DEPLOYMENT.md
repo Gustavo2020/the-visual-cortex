@@ -1,5 +1,7 @@
 # Production Deployment Guide for The Visual Cortex
 
+Note: For day-to-day operations of the live deployment at gsx-2.com, see the operational runbook: [docs/RUNBOOK_GSX2.md](RUNBOOK_GSX2.md)
+
 This guide walks you through deploying The Visual Cortex semantic image search system to a production server with SSL/HTTPS support.
 
 ## Prerequisites

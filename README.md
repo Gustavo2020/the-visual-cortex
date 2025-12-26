@@ -18,6 +18,13 @@ Production-ready semantic image search system using OpenAI CLIP, SigLIP, and oth
 
 ---
 
+## Operational Runbook (gsx-2.com)
+
+For day-to-day operations of the deployment at gsx-2.com, see:
+- [docs/RUNBOOK_GSX2.md](docs/RUNBOOK_GSX2.md)
+
+---
+
 ## Quick Start
 
 ### Development (CLI Interface)

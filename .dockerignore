@@ -1,0 +1,17 @@
+# Exclude large and unnecessary files from Docker build context
+data/
+logs/
+docs/
+.git/
+.gitignore
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.tmp
+*.log
+node_modules/
+certs/
+*.tar.gz

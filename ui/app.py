@@ -166,5 +166,6 @@ if search_button and query:
 
 
 st.markdown("---")
-st.write("Tip: Set API_HOST and API_PORT environment variables if your API is not on localhost:8000.")
+st.write("This page was developed with my friend Matteo Mirgone, awesome guy... Text him (matteo.minrgone@gmail.com, https://www.linkedin.com/in/matteo-mirgone-6b58ab246/)")
+st.write("This is my hello world, so  suggestions or ideas are welcome. Please email me to gustavo.martinez.hincapie@gmail.com")
 

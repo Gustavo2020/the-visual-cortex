@@ -17,8 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install minimal UI dependencies only (no ML stack)
+# Using latest secure version of Streamlit
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir streamlit requests Pillow
+    pip install --no-cache-dir streamlit>=1.52.2 requests Pillow
 
 # Copy application code
 COPY ui/app.py ./app.py
@@ -32,9 +33,9 @@ USER streamlit
 # Expose Streamlit port
 EXPOSE 8501
 
-# Streamlit config
+# Streamlit config with SECURITY HARDENING
 RUN mkdir -p ~/.streamlit && \
-    echo "[server]\nheadless = true\nport = 8501\nenableXsrfProtection = false\n[logger]\nlevel = \"info\"" > ~/.streamlit/config.toml
+    echo "[server]\nheadless = true\nport = 8501\nenableXsrfProtection = true\nenableCORS = false\nmaxUploadSize = 5\n[browser]\ngatherUsageStats = false\n[logger]\nlevel = \"info\"" > ~/.streamlit/config.toml
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
